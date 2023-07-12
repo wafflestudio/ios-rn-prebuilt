@@ -1,0 +1,179 @@
+name: Build and Distribute
+
+on:
+  # schedule:
+  #   - cron:  '0 12 * * *'  # Everyday at 12:00 UTC
+  # workflow_dispatch:
+  #   - inputs:
+  #       version:
+  #         description: 'React Native version to build'
+  #         required: true
+  #         default: '0.72.1'
+  push:
+    branches:
+      - main
+
+env:
+  GITHUB_BOT_USERNAME: 'github-actions'
+  GITHUB_BOT_EMAIL: '41898282+github-actions[bot]@users.noreply.github.com'
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+    - id: react_native_release
+      uses: pozetroninc/github-action-get-latest-release@master
+      with:
+        owner: facebook
+        repo: react-native
+        excludes: prerelease, draft
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - id: my_release
+      uses: pozetroninc/github-action-get-latest-release@master
+      with:
+        repository: ${{ github.repository }}
+        excludes: prerelease, draft
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - uses: madhead/semver-utils@latest
+      id: compare_versions
+      with:
+        version: ${{ steps.react_native_release.outputs.release }}
+        compare-to: ${{ steps.my_release.outputs.release }}
+
+    - name: Terminate if version is not greater
+      run: |
+        echo "React Native version: ${{ steps.react_native_release.outputs.release }}"
+        echo "Current version: ${{ steps.my_release.outputs.release }}"
+        if [[ "${{ steps.compare_versions.outputs.comparison-result }}" != ">" ]]; then
+          echo "React Native version is not greater than current version. Terminating..."
+          exit 1
+        fi
+
+    - name: Check out code
+      uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: latest
+
+    - uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '2.7'
+
+    - name: Install react-native
+      run: |
+        mkdir -p ./react-native
+        cd ./react-native
+        npx react-native init ReactNativeKit --version ${{ steps.react_native_release.outputs.release }}
+    
+    - name: Copy template projects
+      run: |
+        # Clean up boilerplate xcode project
+        rm -rf ./react-native/ReactNativeKit/ios/* 
+        # Copy my template project
+        cp -r ./ReactNativeKit/* ./react-native/ReactNativeKit/ios/
+
+    - name: Install cocoapods dependencies
+      working-directory: ./react-native/ReactNativeKit/ios
+      run: |
+        pod install
+
+    - uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: latest-stable
+
+    - name: Generate xcframework
+      working-directory: ./react-native/ReactNativeKit/ios
+      run: |
+        ./build.sh
+
+    - name: Create a zip archives for each xcframework
+      working-directory: ./react-native/ReactNativeKit/ios/output
+      run: |
+        for dir in *.xcframework
+        do
+            zip -r -q -X "${dir}.zip" "$dir"
+        done
+
+    - name: Install utilities
+      run: |
+        # install string replace utility
+        brew install sd
+
+    - name: Prepare Package.swift
+      working-directory: ./react-native/ReactNativeKit/ios/output
+      run: |
+        # Initialize targetNames and binaryTargets as empty arrays
+        binaryTargets=()
+        releaseTargetNames=()
+        debugTargetNames=()
+
+        for dir in *.xcframework
+        do
+          xcframework_name=$(basename $dir .xcframework)
+          
+          echo "Processing $dir ..."
+
+          # Estimate release download url
+          url=https://github.com/${{ github.repository }}/releases/download/${{ steps.react_native_release.outputs.release }}/${dir}.zip
+          echo "url=$url"
+          
+          # Compute checksum
+          checksum=$(swift package compute-checksum ${dir}.zip)
+          echo "checksum=$checksum"
+
+          binary_target=".binaryTarget(name: \"$xcframework_name\", url: \"$url\", checksum: \"$checksum\"),"
+          binaryTargets+=("$binary_target")
+          
+          # Add xcframework to appropriate targetName array
+          if [[ "$xcframework_name" == *"Debug"* ]]; then
+              debugTargetNames+=("\"$xcframework_name\"")
+          elif [[ "$xcframework_name" == *"Release"* ]]; then
+              releaseTargetNames+=("\"$xcframework_name\"")
+              echo "releaseTargetNames=$releaseTargetNames"
+          else
+              releaseTargetNames+=("\"$xcframework_name\"")
+              debugTargetNames+=("\"$xcframework_name\"")
+          fi
+        done
+
+        # Convert arrays to string
+        releaseTargetNamesString=$(IFS=,; echo "${releaseTargetNames[*]}")
+        debugTargetNamesString=$(IFS=,; echo "${debugTargetNames[*]}")
+        binaryTargetsString=$(printf "%s\n        " "${binaryTargets[@]}")
+
+        # Generate Package.swift with URL and checksum
+        # The placeholders are replaced directly with the values
+        sd '<#releaseTargetNames#>' "$releaseTargetNamesString" < "$GITHUB_WORKSPACE/.Package.template.swift" | sd '<#debugTargetNames#>' "$debugTargetNamesString" | sd '<#binaryTargets#>' "$binaryTargetsString" > "$GITHUB_WORKSPACE/Package.swift"
+
+        cat "$GITHUB_WORKSPACE/Package.swift"
+    
+    - name: Setup Git configurations
+      run: |
+        git config user.name "${{ env.GITHUB_BOT_USERNAME }}"
+        git config user.email "${{ env.GITHUB_BOT_EMAIL }}"
+
+    - name: Add, commit and push to ${{ github.repository }}
+      run: |
+        git add -A
+        git commit -m "Bump to ${{ steps.react_native_release.outputs.release }}"
+        git tag ${{ steps.react_native_release.outputs.release }}
+        git pull --rebase
+        git push origin HEAD
+        git push --tags origin HEAD
+        echo "${{ github.ref }}"
+        echo $(git rev-parse HEAD)
+    
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          ./react-native/ReactNativeKit/ios/output/*.xcframework.zip
+        tag_name: ${{ steps.react_native_release.outputs.release }}
+
+    - name: List all files in working directory
+      run: find .

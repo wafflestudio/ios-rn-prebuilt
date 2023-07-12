@@ -18,6 +18,16 @@ else
 fi
 declare -a sdks=("iphoneos" "iphonesimulator")
 
+find "${podsDir}" -name '*.xcframework' -print0 | while read -d $'\0' file
+do
+    if [ "$(ls -A $file)" ]; then
+        echo "Copying $file to ${outputDir}"
+        rsync -a "$file" "${outputDir}"
+    else
+        echo "$file is empty or does not exist."
+    fi
+done
+
 # Loop through configurations
 for config in "${configs[@]}"; do
     # Loop through SDKs
@@ -35,17 +45,13 @@ for config in "${configs[@]}"; do
             -archivePath "${outputDir}/${config}/${sdk}/${scheme}.xcarchive" \
             archive \
             SKIP_INSTALL=NO \
-            BUILD_LIBRARY_FOR_DISTRIBUTION=YES
+            BUILD_LIBRARY_FOR_DISTRIBUTION=YES \
+            EXCLUDED_ARCHS=i386
     done
 
     # Create xcframework
     xcodebuild -create-xcframework \
         -framework "${outputDir}/${config}/iphoneos/${scheme}.xcarchive/Products/Library/Frameworks/${scheme}.framework" \
         -framework "${outputDir}/${config}/iphonesimulator/${scheme}.xcarchive/Products/Library/Frameworks/${scheme}.framework" \
-        -output "${outputDir}/${config}/${scheme}.xcframework"
-
-    find "${podsDir}" -name '*.xcframework' -print0 | while read -d $'\0' file
-    do
-        cp -R "$file" "${outputDir}/${config}"
-    done
+        -output "${outputDir}/${scheme}-${config}.xcframework"
 done
