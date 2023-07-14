@@ -1,14 +1,8 @@
 name: Build and Distribute
 
 on:
-  # schedule:
-  #   - cron:  '0 12 * * *'  # Everyday at 12:00 UTC
-  # workflow_dispatch:
-  #   - inputs:
-  #       version:
-  #         description: 'React Native version to build'
-  #         required: true
-  #         default: '0.72.1'
+  schedule:
+    - cron:  '0 12 * * *'  # Everyday at 12:00 UTC
   push:
     branches:
       - main
