@@ -68,10 +68,14 @@ jobs:
         mkdir -p ./react-native
         cd ./react-native
         npx react-native init ReactNativeKit --version ${{ steps.react_native_release.outputs.release }}
-
+        cd ReactNativeKit
+        npm install @react-navigation/native react-native-screens react-native-safe-area-context @react-navigation/native-stack react-native-gesture-handler
+    
     - name: Copy template projects
       if: steps.check_versions.outputs.skip != 'true'
       run: |
+        # Print current podfile for debugging
+        cat ./react-native/ReactNativeKit/ios/Podfile
         # Clean up boilerplate xcode project
         rm -rf ./react-native/ReactNativeKit/ios/* 
         # Copy my template project
@@ -81,6 +85,7 @@ jobs:
       if: steps.check_versions.outputs.skip != 'true'
       working-directory: ./react-native/ReactNativeKit/ios
       run: |
+        cat Podfile
         pod install
 
     - uses: maxim-lobanov/setup-xcode@v1
