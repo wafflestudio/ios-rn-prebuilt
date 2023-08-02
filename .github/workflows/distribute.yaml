@@ -14,15 +14,11 @@ env:
 jobs:
   build:
     runs-on: macos-latest
-
     steps:
     - id: react_native_release
-      uses: pozetroninc/github-action-get-latest-release@master
-      with:
-        owner: facebook
-        repo: react-native
-        excludes: prerelease, draft
-        token: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        rn_version=$(npm view react-native version)
+        echo "::set-output name=release::$rn_version"
 
     - id: my_release
       uses: pozetroninc/github-action-get-latest-release@master
@@ -35,35 +31,64 @@ jobs:
       id: compare_versions
       with:
         version: ${{ steps.react_native_release.outputs.release }}
-        compare-to: ${{ steps.my_release.outputs.release }}
+        compare-to: ${{ steps.my_release.outputs.description }}
 
     - id: check_versions
       name: Terminate if version is not greater
       run: |
         echo "React Native version: ${{ steps.react_native_release.outputs.release }}"
         echo "Current version: ${{ steps.my_release.outputs.release }}"
-        if [[ "${{ steps.compare_versions.outputs.comparison-result }}" != ">" ]]; then
-          echo "React Native version is not greater than current version. Skipping further steps..."
-          echo "::set-output name=skip::true"
+        if [[ "${{ steps.compare_versions.outputs.comparison-result }}" == ">" ]]; then
+          echo "::set-output name=bump::minor"
+        elif [[ "${{ github.event_name }}" == "push" ]]; then
+          echo "::set-output name=bump::patch"
+        else
+          echo "::set-output name=bump::skip"
         fi
 
+    - uses: madhead/semver-utils@latest
+      if: steps.check_versions.outputs.bump != 'skip'
+      id: version
+      with:
+        version: ${{ steps.my_release.outputs.description }}
+
+    - name: Determine target version
+      id: target_version
+      if: steps.check_versions.outputs.bump != 'skip'
+      run: |
+        if [[ "${{ steps.check_versions.outputs.bump }}" == "minor" ]]; then
+          echo "::set-output name=target_version::${{ steps.version.outputs.inc-minor }}"
+        elif [[ "${{ steps.check_versions.outputs.bump }}" == "patch" ]]; then
+          echo "::set-output name=target_version::${{ steps.version.outputs.inc-patch }}"
+        fi
+    
+    - name: Debug Print
+      if: steps.check_versions.outputs.bump != 'skip'
+      run: |
+        echo "Bump: ${{ steps.check_versions.outputs.bump }}"
+        echo "Target version: ${{ steps.target_version.outputs.target_version }}"
+        echo "My latest Release: ${{ steps.my_release.outputs.release }}"
+        echo "My latest RN version: ${{ steps.my_release.outputs.description }}"
+        echo "RN latest version: ${{ steps.react_native_release.outputs.release }}"
+        echo "Comparison result: ${{ steps.compare_versions.outputs.comparison-result }}"
+
     - name: Check out code
-      if: steps.check_versions.outputs.skip != 'true'
+      if: steps.check_versions.outputs.bump != 'skip'
       uses: actions/checkout@v3
 
     - name: Set up Node.js
-      if: steps.check_versions.outputs.skip != 'true'
+      if: steps.check_versions.outputs.bump != 'skip'
       uses: actions/setup-node@v3
       with:
         node-version: latest
 
     - uses: ruby/setup-ruby@v1
-      if: steps.check_versions.outputs.skip != 'true'
+      if: steps.check_versions.outputs.bump != 'skip'
       with:
-        ruby-version: '2.7'
+        ruby-version: '2.7.8'
 
     - name: Install react-native
-      if: steps.check_versions.outputs.skip != 'true'
+      if: steps.check_versions.outputs.bump != 'skip'
       run: |
         mkdir -p ./react-native
         cd ./react-native
@@ -72,7 +97,7 @@ jobs:
         npm install @react-navigation/native react-native-screens react-native-safe-area-context @react-navigation/native-stack react-native-gesture-handler
     
     - name: Copy template projects
-      if: steps.check_versions.outputs.skip != 'true'
+      if: steps.check_versions.outputs.bump != 'skip'
       run: |
         # Print current podfile for debugging
         cat ./react-native/ReactNativeKit/ios/Podfile
@@ -82,25 +107,25 @@ jobs:
         cp -r ./ReactNativeKit/* ./react-native/ReactNativeKit/ios/
 
     - name: Install cocoapods dependencies
-      if: steps.check_versions.outputs.skip != 'true'
+      if: steps.check_versions.outputs.bump != 'skip'
       working-directory: ./react-native/ReactNativeKit/ios
       run: |
         cat Podfile
         pod install
 
     - uses: maxim-lobanov/setup-xcode@v1
-      if: steps.check_versions.outputs.skip != 'true'
+      if: steps.check_versions.outputs.bump != 'skip'
       with:
         xcode-version: latest-stable
 
     - name: Generate xcframework
-      if: steps.check_versions.outputs.skip != 'true'
+      if: steps.check_versions.outputs.bump != 'skip'
       working-directory: ./react-native/ReactNativeKit/ios
       run: |
         ./build.sh
 
     - name: Create a zip archives for each xcframework
-      if: steps.check_versions.outputs.skip != 'true'
+      if: steps.check_versions.outputs.bump != 'skip'
       working-directory: ./react-native/ReactNativeKit/ios/output
       run: |
         for dir in *.xcframework
@@ -109,13 +134,13 @@ jobs:
         done
 
     - name: Install utilities
-      if: steps.check_versions.outputs.skip != 'true'
+      if: steps.check_versions.outputs.bump != 'skip'
       run: |
         # install string replace utility
         brew install sd
 
     - name: Prepare Package.swift
-      if: steps.check_versions.outputs.skip != 'true'
+      if: steps.check_versions.outputs.bump != 'skip'
       working-directory: ./react-native/ReactNativeKit/ios/output
       run: |
         # Initialize targetNames and binaryTargets as empty arrays
@@ -164,28 +189,29 @@ jobs:
         cat "$GITHUB_WORKSPACE/Package.swift"
     
     - name: Setup Git configurations
-      if: steps.check_versions.outputs.skip != 'true'
+      if: steps.check_versions.outputs.bump != 'skip'
       run: |
         git config user.name "${{ env.GITHUB_BOT_USERNAME }}"
         git config user.email "${{ env.GITHUB_BOT_EMAIL }}"
 
     - name: Add, commit and push to ${{ github.repository }}
-      if: steps.check_versions.outputs.skip != 'true'
+      if: steps.check_versions.outputs.bump != 'skip'
       run: |
         git add -A
-        git commit -m "Bump to ${{ steps.react_native_release.outputs.release }}"
-        git tag ${{ steps.react_native_release.outputs.release }}
+        git commit -m "Bump to ${{ steps.target_version.outputs.target_version }}"
+        git tag ${{ steps.target_version.outputs.target_version }}
         git pull --rebase
         git push origin HEAD
         git push --tags origin HEAD
         echo "${{ github.ref }}"
         echo $(git rev-parse HEAD)
-    
+
     - name: Release
-      if: steps.check_versions.outputs.skip != 'true'
+      if: steps.check_versions.outputs.bump != 'skip'
       uses: softprops/action-gh-release@v1
       with:
         files: |
           ./react-native/ReactNativeKit/ios/output/*.xcframework.zip
-        tag_name: ${{ steps.react_native_release.outputs.release }}
-
+        tag_name: ${{ steps.target_version.outputs.target_version }}
+        body: |
+          ${{ steps.react_native_release.outputs.release }}
