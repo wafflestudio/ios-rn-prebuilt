@@ -50,7 +50,7 @@ jobs:
       if: steps.check_versions.outputs.bump != 'skip'
       id: version
       with:
-        version: ${{ steps.my_release.outputs.description }}
+        version: ${{ steps.my_release.outputs.release }}
 
     - name: Determine target version
       id: target_version
@@ -155,7 +155,7 @@ jobs:
           echo "Processing $dir ..."
 
           # Estimate release download url
-          url=https://github.com/${{ github.repository }}/releases/download/${{ steps.react_native_release.outputs.release }}/${dir}.zip
+          url=https://github.com/${{ github.repository }}/releases/download/${{ steps.target_version.outputs.target_version }}/${dir}.zip
           echo "url=$url"
           
           # Compute checksum
