@@ -94,7 +94,7 @@ jobs:
         cd ./react-native
         npx react-native init ReactNativeKit --version ${{ steps.react_native_release.outputs.release }}
         cd ReactNativeKit
-        npm install @react-navigation/native react-native-screens react-native-safe-area-context @react-navigation/native-stack react-native-gesture-handler
+        npm install @react-navigation/native react-native-screens react-native-safe-area-context @react-navigation/native-stack react-native-gesture-handler react-native-reanimated @react-navigation/drawer
     
     - name: Copy template projects
       if: steps.check_versions.outputs.bump != 'skip'
@@ -212,6 +212,8 @@ jobs:
       with:
         files: |
           ./react-native/ReactNativeKit/ios/output/*.xcframework.zip
+          ./react-native/ReactNativeKit/package.json
+          ./react-native/ReactNativeKit/package-lock.json
         tag_name: ${{ steps.target_version.outputs.target_version }}
         body: |
           ${{ steps.react_native_release.outputs.release }}
