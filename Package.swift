@@ -18,11 +18,11 @@ let package = Package(
         )
     ],
     targets: [
-        .binaryTarget(name: "OpenSSL", url: "https://github.com/wafflestudio/ios-rn-prebuilt/releases/download/0.1.3/OpenSSL.xcframework.zip", checksum: "60a9b569ac94c30c6080dd1dd23898afd1a85bc6574f188dcb7ce04f4a9f7cf3"),
-        .binaryTarget(name: "ReactNativeKit-Debug", url: "https://github.com/wafflestudio/ios-rn-prebuilt/releases/download/0.1.3/ReactNativeKit-Debug.xcframework.zip", checksum: "e00b1233a429576f7a4bfaec38ea3873651f04945ca0b117e6fa449b351688d0"),
-        .binaryTarget(name: "ReactNativeKit-Release", url: "https://github.com/wafflestudio/ios-rn-prebuilt/releases/download/0.1.3/ReactNativeKit-Release.xcframework.zip", checksum: "002581d1582e2bcb805001a8dc60feeda5695dcbb619bffb767f8325b1981ad3"),
-        .binaryTarget(name: "double-conversion", url: "https://github.com/wafflestudio/ios-rn-prebuilt/releases/download/0.1.3/double-conversion.xcframework.zip", checksum: "ce9a077592223d8f3b8a061beec2eb02944c830b124c038d689fc69108af1578"),
-        .binaryTarget(name: "glog", url: "https://github.com/wafflestudio/ios-rn-prebuilt/releases/download/0.1.3/glog.xcframework.zip", checksum: "0268e447177eb942ff075ebae5107b1931a4203098a865e5fd8912fba013a9eb"),
+        .binaryTarget(name: "OpenSSL", url: "https://github.com/wafflestudio/ios-rn-prebuilt/releases/download/0.2.0/OpenSSL.xcframework.zip", checksum: "3003284b269c8c8ff3d4736cbaeeed0fa1e3a528169e9bfd2c351d6b90883a13"),
+        .binaryTarget(name: "ReactNativeKit-Debug", url: "https://github.com/wafflestudio/ios-rn-prebuilt/releases/download/0.2.0/ReactNativeKit-Debug.xcframework.zip", checksum: "f4ddb6f9e26ffd140875586b33a28a0c66d3fde3a26531058b97cc4e1b5d8a33"),
+        .binaryTarget(name: "ReactNativeKit-Release", url: "https://github.com/wafflestudio/ios-rn-prebuilt/releases/download/0.2.0/ReactNativeKit-Release.xcframework.zip", checksum: "0c89866fb56c1473676bb1f53d68fe6c9ed442cac7333ed16528897a36d3faf1"),
+        .binaryTarget(name: "double-conversion", url: "https://github.com/wafflestudio/ios-rn-prebuilt/releases/download/0.2.0/double-conversion.xcframework.zip", checksum: "215890659078db6bbeae46b877e398d3f25b89fe843238e891554431c9cc63e9"),
+        .binaryTarget(name: "glog", url: "https://github.com/wafflestudio/ios-rn-prebuilt/releases/download/0.2.0/glog.xcframework.zip", checksum: "42bb8bff8837ec79c2094cc6d3cc54c346b4041425ce8973056a771dfd82d4ba"),
         
     ]
 )
