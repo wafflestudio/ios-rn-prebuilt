@@ -94,7 +94,7 @@ jobs:
         cd ./react-native
         npx react-native init ReactNativeKit --version ${{ steps.react_native_release.outputs.release }}
         cd ReactNativeKit
-        npm install @react-navigation/native react-native-screens react-native-safe-area-context @react-navigation/native-stack react-native-gesture-handler react-native-reanimated @react-navigation/drawer @react-native-picker/picker
+        npm install @react-navigation/native react-native-screens react-native-safe-area-context @react-navigation/native-stack react-native-gesture-handler react-native-reanimated @react-navigation/drawer @react-native-picker/picker react-native-svg --save-exact
     
     - name: Copy template projects
       if: steps.check_versions.outputs.bump != 'skip'
