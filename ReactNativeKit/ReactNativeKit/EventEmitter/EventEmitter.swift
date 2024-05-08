@@ -1,7 +1,7 @@
 public class EventEmitter {
     private let internalEmitter: RNEventEmitter
 
-    init(supportedEvents: [SupportedEvent]) {
+    public init(supportedEvents: [SupportedEvent]) {
         self.internalEmitter = RNEventEmitter(supportedEvents: supportedEvents)
     }
 
