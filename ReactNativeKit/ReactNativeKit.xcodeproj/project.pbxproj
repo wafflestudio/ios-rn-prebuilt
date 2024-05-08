@@ -8,11 +8,17 @@
 
 /* Begin PBXBuildFile section */
 		CE1D00B82A5DB4C300C94550 /* React.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE1D00B72A5DB4C300C94550 /* React.swift */; };
+		CEAA84032BEBBACF004908B8 /* RNEventEmitter.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEAA84022BEBBACF004908B8 /* RNEventEmitter.swift */; };
+		CEAA84052BEBBB4E004908B8 /* RNEventEmitter.m in Sources */ = {isa = PBXBuildFile; fileRef = CEAA84042BEBBB4E004908B8 /* RNEventEmitter.m */; };
+		CEAA84072BEBC11C004908B8 /* EventEmitter.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEAA84062BEBC11C004908B8 /* EventEmitter.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		CE1D00AD2A5DB49400C94550 /* ReactNativeKit.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = ReactNativeKit.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		CE1D00B72A5DB4C300C94550 /* React.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = React.swift; sourceTree = "<group>"; };
+		CEAA84022BEBBACF004908B8 /* RNEventEmitter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RNEventEmitter.swift; sourceTree = "<group>"; };
+		CEAA84042BEBBB4E004908B8 /* RNEventEmitter.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RNEventEmitter.m; sourceTree = "<group>"; };
+		CEAA84062BEBC11C004908B8 /* EventEmitter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventEmitter.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -46,8 +52,19 @@
 			isa = PBXGroup;
 			children = (
 				CE1D00B72A5DB4C300C94550 /* React.swift */,
+				CEAA84002BEBBABB004908B8 /* EventEmitter */,
 			);
 			path = ReactNativeKit;
+			sourceTree = "<group>";
+		};
+		CEAA84002BEBBABB004908B8 /* EventEmitter */ = {
+			isa = PBXGroup;
+			children = (
+				CEAA84062BEBC11C004908B8 /* EventEmitter.swift */,
+				CEAA84022BEBBACF004908B8 /* RNEventEmitter.swift */,
+				CEAA84042BEBBB4E004908B8 /* RNEventEmitter.m */,
+			);
+			path = EventEmitter;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -130,6 +147,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				CE1D00B82A5DB4C300C94550 /* React.swift in Sources */,
+				CEAA84072BEBC11C004908B8 /* EventEmitter.swift in Sources */,
+				CEAA84052BEBBB4E004908B8 /* RNEventEmitter.m in Sources */,
+				CEAA84032BEBBACF004908B8 /* RNEventEmitter.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
