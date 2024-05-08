@@ -6,197 +6,197 @@ on:
       - main
 
 env:
-  GITHUB_BOT_USERNAME: 'github-actions'
-  GITHUB_BOT_EMAIL: '41898282+github-actions[bot]@users.noreply.github.com'
-  REACT_NATIVE_VERSION: '0.72.3'
+  GITHUB_BOT_USERNAME: "github-actions"
+  GITHUB_BOT_EMAIL: "41898282+github-actions[bot]@users.noreply.github.com"
+  REACT_NATIVE_VERSION: "0.72.3"
+  NO_FLIPPER: "1"
 
 jobs:
   build:
     runs-on: macos-latest
-    
+
     steps:
-    - id: my_release
-      uses: pozetroninc/github-action-get-latest-release@master
-      with:
-        repository: ${{ github.repository }}
-        excludes: prerelease, draft
-        token: ${{ secrets.GITHUB_TOKEN }}
+      - id: my_release
+        uses: pozetroninc/github-action-get-latest-release@master
+        with:
+          repository: ${{ github.repository }}
+          excludes: prerelease, draft
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-    - uses: madhead/semver-utils@latest
-      id: version
-      with:
-        version: ${{ steps.my_release.outputs.release }}
+      - uses: madhead/semver-utils@latest
+        id: version
+        with:
+          version: ${{ steps.my_release.outputs.release }}
 
-    - id: check_versions
-      name: Terminate if version is not greater
-      run: |
-        echo "React Native version: ${{ env.REACT_NATIVE_VERSION }}"
-        echo "Current version: ${{ steps.my_release.outputs.release }}"
-        if [[ "${{ steps.compare_versions.outputs.comparison-result }}" == ">" ]]; then
-          echo "::set-output name=bump::minor"
-        elif [[ "${{ steps.compare_versions.outputs.comparison-result }}" == "==" ]]; then
-          echo "::set-output name=bump::patch"
-        else
-          echo "::set-output name=bump::minor"
-        fi
-
-
-    - name: Determine target version
-      id: target_version
-      run: |
-        if [[ "${{ steps.check_versions.outputs.bump }}" == "minor" ]]; then
-          echo "::set-output name=target_version::${{ steps.version.outputs.inc-minor }}"
-        elif [[ "${{ steps.check_versions.outputs.bump }}" == "patch" ]]; then
-          echo "::set-output name=target_version::${{ steps.version.outputs.inc-patch }}"
-        fi
-    
-    - name: Debug Print
-      run: |
-        echo "Bump: ${{ steps.check_versions.outputs.bump }}"
-        echo "Target version: ${{ steps.target_version.outputs.target_version }}"
-        echo "My latest Release: ${{ steps.my_release.outputs.release }}"
-        echo "My latest RN version: ${{ steps.my_release.outputs.description }}"
-        echo "RN latest version: ${{ env.REACT_NATIVE_VERSION }}"
-        echo "Comparison result: ${{ steps.compare_versions.outputs.comparison-result }}"
-
-    - name: Check out code
-      uses: actions/checkout@v3
-
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: latest
-
-    - uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: '2.7.8'
-
-    - name: Install react-native
-      run: |
-        mkdir -p ./react-native
-        cd ./react-native
-        npx react-native init ReactNativeKit --version ${{ env.REACT_NATIVE_VERSION }}
-        cd ReactNativeKit
-        npm install \
-          @react-navigation/native@6.1.7 \
-          react-native-screens@3.23.0 \
-          react-native-safe-area-context@4.7.1 \
-          @react-navigation/native-stack@6.9.13 \
-          react-native-gesture-handler@2.12.0 \
-          react-native-reanimated@3.4.2 \
-          @react-navigation/drawer@6.6.3 \
-          @react-native-picker/picker@2.5.0 \
-          react-native-svg@13.11.0 \
-          @react-native-async-storage/async-storage@1.19.8 --save-exact
-    
-    - name: Copy template projects
-      run: |
-        # Print current podfile for debugging
-        cat ./react-native/ReactNativeKit/ios/Podfile
-        # Clean up boilerplate xcode project
-        rm -rf ./react-native/ReactNativeKit/ios/* 
-        # Copy my template project
-        cp -r ./ReactNativeKit/* ./react-native/ReactNativeKit/ios/
-
-    - name: Install cocoapods dependencies
-      working-directory: ./react-native/ReactNativeKit/ios
-      run: |
-        cat Podfile
-        pod install
-
-    - uses: maxim-lobanov/setup-xcode@v1
-      with:
-        xcode-version: latest-stable
-
-    - name: Generate xcframework
-      working-directory: ./react-native/ReactNativeKit/ios
-      run: |
-        ./build.sh
-
-    - name: Create a zip archives for each xcframework
-      working-directory: ./react-native/ReactNativeKit/ios/output
-      run: |
-        for dir in *.xcframework
-        do
-            zip -r -q -X "${dir}.zip" "$dir"
-        done
-
-    - name: Install utilities
-      run: |
-        # install string replace utility
-        brew install sd
-
-    - name: Prepare Package.swift
-      working-directory: ./react-native/ReactNativeKit/ios/output
-      run: |
-        # Initialize targetNames and binaryTargets as empty arrays
-        binaryTargets=()
-        releaseTargetNames=()
-        debugTargetNames=()
-
-        for dir in *.xcframework
-        do
-          xcframework_name=$(basename $dir .xcframework)
-          
-          echo "Processing $dir ..."
-
-          # Estimate release download url
-          url=https://github.com/${{ github.repository }}/releases/download/${{ steps.target_version.outputs.target_version }}/${dir}.zip
-          echo "url=$url"
-          
-          # Compute checksum
-          checksum=$(swift package compute-checksum ${dir}.zip)
-          echo "checksum=$checksum"
-
-          binary_target=".binaryTarget(name: \"$xcframework_name\", url: \"$url\", checksum: \"$checksum\"),"
-          binaryTargets+=("$binary_target")
-          
-          # Add xcframework to appropriate targetName array
-          if [[ "$xcframework_name" == *"Debug"* ]]; then
-              debugTargetNames+=("\"$xcframework_name\"")
-          elif [[ "$xcframework_name" == *"Release"* ]]; then
-              releaseTargetNames+=("\"$xcframework_name\"")
-              echo "releaseTargetNames=$releaseTargetNames"
+      - id: check_versions
+        name: Terminate if version is not greater
+        run: |
+          echo "React Native version: ${{ env.REACT_NATIVE_VERSION }}"
+          echo "Current version: ${{ steps.my_release.outputs.release }}"
+          if [[ "${{ steps.compare_versions.outputs.comparison-result }}" == ">" ]]; then
+            echo "::set-output name=bump::minor"
+          elif [[ "${{ steps.compare_versions.outputs.comparison-result }}" == "==" ]]; then
+            echo "::set-output name=bump::patch"
           else
-              releaseTargetNames+=("\"$xcframework_name\"")
-              debugTargetNames+=("\"$xcframework_name\"")
+            echo "::set-output name=bump::minor"
           fi
-        done
 
-        # Convert arrays to string
-        releaseTargetNamesString=$(IFS=,; echo "${releaseTargetNames[*]}")
-        debugTargetNamesString=$(IFS=,; echo "${debugTargetNames[*]}")
-        binaryTargetsString=$(printf "%s\n        " "${binaryTargets[@]}")
+      - name: Determine target version
+        id: target_version
+        run: |
+          if [[ "${{ steps.check_versions.outputs.bump }}" == "minor" ]]; then
+            echo "::set-output name=target_version::${{ steps.version.outputs.inc-minor }}"
+          elif [[ "${{ steps.check_versions.outputs.bump }}" == "patch" ]]; then
+            echo "::set-output name=target_version::${{ steps.version.outputs.inc-patch }}"
+          fi
 
-        # Generate Package.swift with URL and checksum
-        # The placeholders are replaced directly with the values
-        sd '<#releaseTargetNames#>' "$releaseTargetNamesString" < "$GITHUB_WORKSPACE/.Package.template.swift" | sd '<#debugTargetNames#>' "$debugTargetNamesString" | sd '<#binaryTargets#>' "$binaryTargetsString" > "$GITHUB_WORKSPACE/Package.swift"
+      - name: Debug Print
+        run: |
+          echo "Bump: ${{ steps.check_versions.outputs.bump }}"
+          echo "Target version: ${{ steps.target_version.outputs.target_version }}"
+          echo "My latest Release: ${{ steps.my_release.outputs.release }}"
+          echo "My latest RN version: ${{ steps.my_release.outputs.description }}"
+          echo "RN latest version: ${{ env.REACT_NATIVE_VERSION }}"
+          echo "Comparison result: ${{ steps.compare_versions.outputs.comparison-result }}"
 
-        cat "$GITHUB_WORKSPACE/Package.swift"
-    
-    - name: Setup Git configurations
-      run: |
-        git config user.name "${{ env.GITHUB_BOT_USERNAME }}"
-        git config user.email "${{ env.GITHUB_BOT_EMAIL }}"
+      - name: Check out code
+        uses: actions/checkout@v3
 
-    - name: Add, commit and push to ${{ github.repository }}
-      run: |
-        git add -A
-        git commit -m "Bump to ${{ steps.target_version.outputs.target_version }}"
-        git tag ${{ steps.target_version.outputs.target_version }}
-        git pull --rebase
-        git push origin HEAD
-        git push --tags origin HEAD
-        echo "${{ github.ref }}"
-        echo $(git rev-parse HEAD)
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: latest
 
-    - name: Release
-      uses: softprops/action-gh-release@v1
-      with:
-        files: |
-          ./react-native/ReactNativeKit/ios/output/*.xcframework.zip
-          ./react-native/ReactNativeKit/package.json
-          ./react-native/ReactNativeKit/package-lock.json
-        tag_name: ${{ steps.target_version.outputs.target_version }}
-        body: |
-          ${{ env.REACT_NATIVE_VERSION }}
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "2.7.8"
+
+      - name: Install react-native
+        run: |
+          mkdir -p ./react-native
+          cd ./react-native
+          npx react-native init ReactNativeKit --version ${{ env.REACT_NATIVE_VERSION }}
+          cd ReactNativeKit
+          npm install \
+            @react-navigation/native@6.1.7 \
+            react-native-screens@3.23.0 \
+            react-native-safe-area-context@4.7.1 \
+            @react-navigation/native-stack@6.9.13 \
+            react-native-gesture-handler@2.12.0 \
+            react-native-reanimated@3.4.2 \
+            @react-navigation/drawer@6.6.3 \
+            @react-native-picker/picker@2.5.0 \
+            react-native-svg@13.11.0 \
+            @react-native-async-storage/async-storage@1.19.8 --save-exact
+
+      - name: Copy template projects
+        run: |
+          # Print current podfile for debugging
+          cat ./react-native/ReactNativeKit/ios/Podfile
+          # Clean up boilerplate xcode project
+          rm -rf ./react-native/ReactNativeKit/ios/* 
+          # Copy my template project
+          cp -r ./ReactNativeKit/* ./react-native/ReactNativeKit/ios/
+
+      - name: Install cocoapods dependencies
+        working-directory: ./react-native/ReactNativeKit/ios
+        run: |
+          cat Podfile
+          pod install
+
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Generate xcframework
+        working-directory: ./react-native/ReactNativeKit/ios
+        run: |
+          ./build.sh
+
+      - name: Create a zip archives for each xcframework
+        working-directory: ./react-native/ReactNativeKit/ios/output
+        run: |
+          for dir in *.xcframework
+          do
+              zip -r -q -X "${dir}.zip" "$dir"
+          done
+
+      - name: Install utilities
+        run: |
+          # install string replace utility
+          brew install sd
+
+      - name: Prepare Package.swift
+        working-directory: ./react-native/ReactNativeKit/ios/output
+        run: |
+          # Initialize targetNames and binaryTargets as empty arrays
+          binaryTargets=()
+          releaseTargetNames=()
+          debugTargetNames=()
+
+          for dir in *.xcframework
+          do
+            xcframework_name=$(basename $dir .xcframework)
+            
+            echo "Processing $dir ..."
+
+            # Estimate release download url
+            url=https://github.com/${{ github.repository }}/releases/download/${{ steps.target_version.outputs.target_version }}/${dir}.zip
+            echo "url=$url"
+            
+            # Compute checksum
+            checksum=$(swift package compute-checksum ${dir}.zip)
+            echo "checksum=$checksum"
+
+            binary_target=".binaryTarget(name: \"$xcframework_name\", url: \"$url\", checksum: \"$checksum\"),"
+            binaryTargets+=("$binary_target")
+            
+            # Add xcframework to appropriate targetName array
+            if [[ "$xcframework_name" == *"Debug"* ]]; then
+                debugTargetNames+=("\"$xcframework_name\"")
+            elif [[ "$xcframework_name" == *"Release"* ]]; then
+                releaseTargetNames+=("\"$xcframework_name\"")
+                echo "releaseTargetNames=$releaseTargetNames"
+            else
+                releaseTargetNames+=("\"$xcframework_name\"")
+                debugTargetNames+=("\"$xcframework_name\"")
+            fi
+          done
+
+          # Convert arrays to string
+          releaseTargetNamesString=$(IFS=,; echo "${releaseTargetNames[*]}")
+          debugTargetNamesString=$(IFS=,; echo "${debugTargetNames[*]}")
+          binaryTargetsString=$(printf "%s\n        " "${binaryTargets[@]}")
+
+          # Generate Package.swift with URL and checksum
+          # The placeholders are replaced directly with the values
+          sd '<#releaseTargetNames#>' "$releaseTargetNamesString" < "$GITHUB_WORKSPACE/.Package.template.swift" | sd '<#debugTargetNames#>' "$debugTargetNamesString" | sd '<#binaryTargets#>' "$binaryTargetsString" > "$GITHUB_WORKSPACE/Package.swift"
+
+          cat "$GITHUB_WORKSPACE/Package.swift"
+
+      - name: Setup Git configurations
+        run: |
+          git config user.name "${{ env.GITHUB_BOT_USERNAME }}"
+          git config user.email "${{ env.GITHUB_BOT_EMAIL }}"
+
+      - name: Add, commit and push to ${{ github.repository }}
+        run: |
+          git add -A
+          git commit -m "Bump to ${{ steps.target_version.outputs.target_version }}"
+          git tag ${{ steps.target_version.outputs.target_version }}
+          git pull --rebase
+          git push origin HEAD
+          git push --tags origin HEAD
+          echo "${{ github.ref }}"
+          echo $(git rev-parse HEAD)
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            ./react-native/ReactNativeKit/ios/output/*.xcframework.zip
+            ./react-native/ReactNativeKit/package.json
+            ./react-native/ReactNativeKit/package-lock.json
+          tag_name: ${{ steps.target_version.outputs.target_version }}
+          body: |
+            ${{ env.REACT_NATIVE_VERSION }}
