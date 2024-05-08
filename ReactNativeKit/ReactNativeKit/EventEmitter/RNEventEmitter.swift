@@ -3,13 +3,13 @@ import Foundation
 
 @objc(RNEventEmitter)
 class RNEventEmitter: RCTEventEmitter {
-    private let events: [any SupportedEvent]
-    init(supportedEvents: [any SupportedEvent]) {
+    private let events: [String]
+    init(supportedEvents: [String]) {
         self.events = supportedEvents
         super.init()
     }
 
     override func supportedEvents() -> [String] {
-        events.map { $0.rawValue }
+        events.map { $0 }
     }
 }
