@@ -2,7 +2,8 @@ public class EventEmitter<EventType: SupportedEvent> {
     private let internalEmitter: RNEventEmitter
 
     public init() {
-        self.internalEmitter = RNEventEmitter(supportedEvents: EventType.allEvents)
+        internalEmitter = RNEventEmitter()
+        internalEmitter.events = EventType.allEvents
     }
 
     public func emitEvent(_ event: EventType, payload: [AnyHashable: Any]? = [:]) {

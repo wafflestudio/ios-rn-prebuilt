@@ -3,9 +3,8 @@ import Foundation
 
 @objc(RNEventEmitter)
 class RNEventEmitter: RCTEventEmitter {
-    private let events: [String]
-    init(supportedEvents: [String]) {
-        self.events = supportedEvents
+    var events: [String] = []
+    override init() {
         super.init()
     }
 
