@@ -2,7 +2,7 @@ public class EventEmitter<EventType: SupportedEvent> {
     private let internalEmitter: RNEventEmitter
 
     public init() {
-        internalEmitter = RNEventEmitter()
+        internalEmitter = RNEventEmitter.shared ?? fatalError("RNEventEmitter.shared is nil. Make sure to initialize the RNEventEmitter before using it.")
         internalEmitter.events = EventType.allEvents
     }
 

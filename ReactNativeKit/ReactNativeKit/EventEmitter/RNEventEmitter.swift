@@ -3,9 +3,11 @@ import Foundation
 
 @objc(RNEventEmitter)
 class RNEventEmitter: RCTEventEmitter {
+    static var shared: RNEventEmitter?
     var events: [String] = []
     override init() {
         super.init()
+        RNEventEmitter.shared = self
     }
 
     override func supportedEvents() -> [String] {
