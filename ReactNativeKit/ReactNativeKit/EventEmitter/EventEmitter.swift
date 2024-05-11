@@ -1,13 +1,14 @@
-public class EventEmitter<EventType: SupportedEvent> {
-    public init() {
-        emitter.events = EventType.allEvents
-    }
+public actor EventEmitter<EventType: SupportedEvent> {
+    public init() {}
 
     private var emitter: RNEventEmitter {
-        RNEventEmitter.shared!
+        RNEventEmitter.shared
     }
 
-    public func emitEvent(_ event: EventType, payload: [AnyHashable: Any]? = [:]) {
+    public func emitEvent(_ event: EventType, payload: [AnyHashable: Any]? = [:]) async {
+        if emitter.events.isEmpty {
+            emitter.events = EventType.allEvents
+        }
         emitter.sendEvent(withName: event.rawValue, body: payload)
     }
 }

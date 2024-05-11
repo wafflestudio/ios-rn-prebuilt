@@ -3,11 +3,22 @@ import Foundation
 
 @objc(RNEventEmitter)
 class RNEventEmitter: RCTEventEmitter {
-    static var shared: RNEventEmitter?
+    private static var _shared: RNEventEmitter?
+    static var shared: RNEventEmitter {
+        if let shared = _shared {
+            return shared
+        }
+        initializationSemaphore.wait()
+        return _shared!
+    
+    }
+    private static let initializationSemaphore = DispatchSemaphore(value: 0)
+
     var events: [String] = []
     override init() {
         super.init()
-        RNEventEmitter.shared = self
+        RNEventEmitter._shared = self
+        RNEventEmitter.initializationSemaphore.signal()
     }
 
     override func supportedEvents() -> [String] {
