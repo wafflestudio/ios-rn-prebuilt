@@ -11,6 +11,6 @@ class RNEventEmitter: RCTEventEmitter {
     }
 
     override func supportedEvents() -> [String] {
-        events.map { $0 }
+        events
     }
 }

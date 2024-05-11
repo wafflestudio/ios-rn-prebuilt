@@ -1,13 +1,14 @@
 public class EventEmitter<EventType: SupportedEvent> {
-    private let internalEmitter: RNEventEmitter
-
     public init() {
-        internalEmitter = RNEventEmitter.shared ?? fatalError("RNEventEmitter.shared is nil. Make sure to initialize the RNEventEmitter before using it.")
-        internalEmitter.events = EventType.allEvents
+        emitter.events = EventType.allEvents
+    }
+
+    private var emitter: RNEventEmitter {
+        RNEventEmitter.shared!
     }
 
     public func emitEvent(_ event: EventType, payload: [AnyHashable: Any]? = [:]) {
-        internalEmitter.sendEvent(withName: event.rawValue, body: payload)
+        emitter.sendEvent(withName: event.rawValue, body: payload)
     }
 }
 
