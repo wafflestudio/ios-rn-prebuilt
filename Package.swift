@@ -18,8 +18,8 @@ let package = Package(
         )
     ],
     targets: [
-        .binaryTarget(name: "ReactNativeKit-Debug", url: "https://github.com/wafflestudio/ios-rn-prebuilt/releases/download/0.12.0/ReactNativeKit-Debug.xcframework.zip", checksum: "5a5bf69c656a8cc396e528ce13f02f217315370f597e7123162bc5617f596512"),
-        .binaryTarget(name: "ReactNativeKit-Release", url: "https://github.com/wafflestudio/ios-rn-prebuilt/releases/download/0.12.0/ReactNativeKit-Release.xcframework.zip", checksum: "00ee1a239aba088691cdaad3b214158ec99b6b746abc4144ca84feb7c8439e41"),
+        .binaryTarget(name: "ReactNativeKit-Debug", url: "https://github.com/wafflestudio/ios-rn-prebuilt/releases/download/0.13.0/ReactNativeKit-Debug.xcframework.zip", checksum: "5df846dda2f3f1610f02b241fbfcf6ebd7a0e3ed4d8891551c7f642fed887520"),
+        .binaryTarget(name: "ReactNativeKit-Release", url: "https://github.com/wafflestudio/ios-rn-prebuilt/releases/download/0.13.0/ReactNativeKit-Release.xcframework.zip", checksum: "789b8ae836bf9f79d5625a70c2e0b09c26babb39a183ce1099ea6c07d8dc894d"),
         
     ]
 )
