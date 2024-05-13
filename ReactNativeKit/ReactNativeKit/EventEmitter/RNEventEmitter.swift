@@ -29,7 +29,7 @@ class RNEventEmitter: RCTEventEmitter {
         events
     }
 
-    @objc func sendEventToNative(name: String, payload: [AnyHashable: Any]? = nil) {
+    @objc func sendEventToNative(_ name: String, payload: [AnyHashable: Any]? = nil) {
         if let registerEvent = RegisterEvent(rawValue: name) {
             registerEventSubject.value = registerEvent
         }
