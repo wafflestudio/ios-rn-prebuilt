@@ -12,6 +12,7 @@ class RNEventEmitter: RCTEventEmitter {
         if let shared = _shared {
             return shared
         }
+        logger.debug("RNEventEmitter.shared is accessed but not initialized yet. Waiting for initialization.")
         initializationSemaphore.wait()
         return _shared!
     
@@ -23,13 +24,16 @@ class RNEventEmitter: RCTEventEmitter {
         super.init()
         RNEventEmitter._shared = self
         RNEventEmitter.initializationSemaphore.signal()
+        logger.debug("RNEventEmitter initialized")
     }
 
     override func supportedEvents() -> [String] {
-        events
+        logger.debug("\(#function) \(self.events)")
+        return events
     }
 
-    @objc func sendEventToNative(_ name: String, payload: [AnyHashable: Any]? = nil) {
+    @objc func sendEventToNative(name: String, payload: [AnyHashable: Any]? = nil) {
+        logger.debug("\(#function) name:\(name) payload:\(String(describing: payload))")
         if let registerEvent = RegisterEvent(rawValue: name) {
             registerEventSubject.value = registerEvent
         }
