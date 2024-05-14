@@ -12,6 +12,10 @@ public actor EventEmitter<EventType: SupportedEvent> {
     }
 
     public func emitEvent(_ event: EventType, payload: [AnyHashable: Any]? = [:]) async {
+        if emitter.events.isEmpty {
+            logger.debug("Event emitter does not have any supported events. Registering all events.")
+            emitter.events = EventType.allEvents
+        }
         if emitter.registerEventSubject.value != .register {
             logger.debug("Event emitter is not registered yet. Waiting for registration.")
             await waitForRegistration()
@@ -19,10 +23,6 @@ public actor EventEmitter<EventType: SupportedEvent> {
         guard emitter.registerEventSubject.value == .register else {
             assertionFailure("Event emitter is not registered even after waiting for registration.")
             return
-        }
-        if emitter.events.isEmpty {
-            logger.debug("Event emitter does not have any supported events. Registering all events.")
-            emitter.events = EventType.allEvents
         }
         logger.debug("Emitting event: \(event.rawValue) with payload: \(String(describing: payload))")
         emitter.sendEvent(withName: event.rawValue, body: payload)
