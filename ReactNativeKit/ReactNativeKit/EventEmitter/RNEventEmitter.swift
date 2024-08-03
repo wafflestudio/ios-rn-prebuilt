@@ -43,8 +43,8 @@ class RNEventEmitter: RCTEventEmitter {
 }
 
 public struct JSEvent {
-    let name: String
-    let payload: [AnyHashable: Any]?
+    public let name: String
+    public let payload: [AnyHashable: Any]?
 }
 
 enum RegisterEvent: String {
