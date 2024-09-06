@@ -7,8 +7,8 @@ public actor EventEmitter<EventType: SupportedEvent> {
         RNEventEmitter.shared
     }
 
-    public var jsEventPublisher: AnyPublisher<JSEvent, Never> {
-        emitter.jsEventSubject.eraseToAnyPublisher()
+    public var jsEventStream: AsyncStream<JSEvent> {
+        emitter.jsEventStream.stream
     }
 
     public func emitEvent(_ event: EventType, payload: [AnyHashable: Any]? = [:]) async {

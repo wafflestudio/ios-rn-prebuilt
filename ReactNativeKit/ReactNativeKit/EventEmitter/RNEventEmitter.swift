@@ -4,7 +4,7 @@ import Combine
 
 @objc(RNEventEmitter)
 class RNEventEmitter: RCTEventEmitter {
-    let jsEventSubject = PassthroughSubject<JSEvent, Never>()
+    let jsEventStream = AsyncStream.makeStream(of: JSEvent.self)
     let registerEventSubject = CurrentValueSubject<RegisterEvent, Never>(.deregister)
 
     private static var _shared: RNEventEmitter?
@@ -38,11 +38,11 @@ class RNEventEmitter: RCTEventEmitter {
             registerEventSubject.value = registerEvent
         }
         let jsEvent = JSEvent(name: name, payload: payload)
-        jsEventSubject.send(jsEvent)
+        jsEventStream.continuation.yield(jsEvent)
     }
 }
 
-public struct JSEvent {
+public struct JSEvent: @unchecked Sendable {
     public let name: String
     public let payload: [AnyHashable: Any]?
 }

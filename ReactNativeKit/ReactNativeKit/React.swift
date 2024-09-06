@@ -9,6 +9,7 @@ import UIKit
 ///   - initialProperties: The initial properties that should be passed to the React Native module. These are made available in the React Native application via this.props.
 ///   - backgroundColor: The background color for the React Native View. Default is .clear.
 /// - Returns: A UIView configured to run the specified React Native application.
+@MainActor
 public func makeReactView(
     bundleURL: URL,
     moduleName: String,
