@@ -24,6 +24,9 @@ class RNEventEmitter: RCTEventEmitter {
         super.init()
         RNEventEmitter._shared = self
         RNEventEmitter.initializationSemaphore.signal()
+        jsEventStream.continuation.onTermination = { _ in
+            logger.debug("JS event stream terminated")
+        }
         logger.debug("RNEventEmitter initialized")
     }
 
@@ -33,12 +36,13 @@ class RNEventEmitter: RCTEventEmitter {
     }
 
     @objc func sendEventToNative(_ name: String, payload: [AnyHashable: Any]? = nil) {
-        logger.debug("\(#function) name:\(name) payload:\(String(describing: payload))")
         if let registerEvent = RegisterEvent(rawValue: name) {
             registerEventSubject.value = registerEvent
         }
+        logger.debug("\(#function) name:\(name) payload:\(String(describing: payload))")
         let jsEvent = JSEvent(name: name, payload: payload)
         jsEventStream.continuation.yield(jsEvent)
+        logger.debug("Event sent to stream: \(name) with payload: \(String(describing: payload))")
     }
 }
 
