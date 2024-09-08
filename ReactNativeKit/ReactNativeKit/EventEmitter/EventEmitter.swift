@@ -1,16 +1,7 @@
 import Combine
 
 public actor EventEmitter<EventType: SupportedEvent> {
-    public init() {
-        Task {
-            if #available(iOS 16, *) {
-                for i in 1...100000 {
-                    try? await Task.sleep(nanoseconds: 1000000000)
-                    await emitter.jsEventStream.continuation.yield(.init(name: "test\(i)", payload: [:]))
-                }
-            }
-        }
-    }
+    public init() {}
 
     private var emitter: RNEventEmitter {
         RNEventEmitter.shared
