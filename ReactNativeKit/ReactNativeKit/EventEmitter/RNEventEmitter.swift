@@ -5,7 +5,7 @@ import Combine
 @objc(RNEventEmitter)
 class RNEventEmitter: RCTEventEmitter {
     let jsEventStream = AsyncStream.makeStream(of: JSEvent.self)
-    let registerEventSubject = CurrentValueSubject<RegisterEvent, Never>(.deregister)
+    let registerEventStream = AsyncStream.makeStream(of: RegisterEvent.self)
 
     private static var _shared: RNEventEmitter?
     static var shared: RNEventEmitter {
@@ -37,12 +37,11 @@ class RNEventEmitter: RCTEventEmitter {
 
     @objc func sendEventToNative(_ name: String, payload: [AnyHashable: Any]? = nil) {
         if let registerEvent = RegisterEvent(rawValue: name) {
-            registerEventSubject.value = registerEvent
+            registerEventStream.continuation.yield(registerEvent)
         }
-        logger.debug("\(#function) name:\(name) payload:\(String(describing: payload))")
         let jsEvent = JSEvent(name: name, payload: payload)
         jsEventStream.continuation.yield(jsEvent)
-        logger.debug("Event sent to stream: \(name) with payload: \(String(describing: payload))")
+        logger.debug("Event sent to native stream: \(name) with payload: \(String(describing: payload))")
     }
 }
 
@@ -51,7 +50,7 @@ public struct JSEvent: @unchecked Sendable {
     public let payload: [AnyHashable: Any]?
 }
 
-enum RegisterEvent: String {
+enum RegisterEvent: String, Sendable {
     case register
     case deregister
 }

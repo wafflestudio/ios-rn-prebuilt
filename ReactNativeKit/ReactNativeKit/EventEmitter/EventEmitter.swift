@@ -1,10 +1,26 @@
 import Combine
 
 public actor EventEmitter<EventType: SupportedEvent> {
-    public init() {}
+    private var isRegistered = false
+    public init() {
+        Task { [weak self] in
+            guard let stream = await self?.emitter.registerEventStream.stream else { return }
+            for await registerEvent in stream {
+                guard let self else { return }
+                if registerEvent == .register {
+                    await setIsRegistered()
+                }
+            }
+        }
+    }
 
     private var emitter: RNEventEmitter {
         RNEventEmitter.shared
+    }
+
+    private func setIsRegistered() {
+        isRegistered = true
+        emitter.registerEventStream.continuation.finish()
     }
 
     public var jsEventStream: AsyncStream<JSEvent> {
@@ -16,30 +32,18 @@ public actor EventEmitter<EventType: SupportedEvent> {
             logger.debug("Event emitter does not have any supported events. Registering all events.")
             emitter.events = EventType.allEvents
         }
-        if emitter.registerEventSubject.value != .register {
+        if !isRegistered {
             logger.debug("Event emitter is not registered yet. Waiting for registration.")
             await waitForRegistration()
-        }
-        guard emitter.registerEventSubject.value == .register else {
-            assertionFailure("Event emitter is not registered even after waiting for registration.")
-            return
         }
         logger.debug("Emitting event: \(event.rawValue) with payload: \(String(describing: payload))")
         emitter.sendEvent(withName: event.rawValue, body: payload)
     }
 
     private func waitForRegistration() async {
-        var cancellable: AnyCancellable?
-        await withCheckedContinuation { continuation in
-            cancellable = emitter.registerEventSubject
-                .sink { event in
-                    if event == .register {
-                        logger.debug("Event emitter is registered.")
-                        continuation.resume()
-                    }
-                }
+        while !isRegistered {
+            try? await Task.sleep(nanoseconds: 10_000_000) // 10ms
         }
-        cancellable?.cancel()
     }
 }
 
